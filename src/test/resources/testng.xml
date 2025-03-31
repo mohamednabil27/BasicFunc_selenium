@@ -1,0 +1,9 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="My Test Suite">
+    <test name="My Tests">
+        <classes>
+            <!-- Replace with your test classes -->
+            <class name="Basicfunc"/>
+        </classes>
+    </test>
+</suite>
