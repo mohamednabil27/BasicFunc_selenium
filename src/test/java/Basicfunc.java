@@ -1,13 +1,11 @@
-import org.openqa.selenium.By;
-import org.openqa.selenium.Keys;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
 
 import java.io.File;
 import java.io.IOException;
@@ -17,183 +15,179 @@ import java.util.Optional;
 
 public class Basicfunc {
     WebDriver driver;
+    private static final String BASE_URL = "https://duckduckgo.com/";
+    private static final Duration TIMEOUT = Duration.ofSeconds(20);
 
     @Test
-    public void openbrowser() throws InterruptedException, IOException {
-        // Set up the ChromeDriver (Make sure the chromedriver binary is in your system PATH or specify its location)
+    public void openbrowser() throws IOException {
         driver = BrowserSetup.getDriver();
-        driver.get("https://duckduckgo.com/");  // Provide a valid URL
-        //driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(2));
-        System.out.println(driver.getTitle());
-
-       Assert.assertEquals(driver.getTitle() , "DuckDuckGo - Protection. Privacy. Peace of mind.");
-
-
-        driver.quit();
+        try {
+            driver.get(BASE_URL);
+            Assert.assertEquals(driver.getTitle(), "DuckDuckGo - Protection. Privacy. Peace of mind.");
+        } finally {
+            driver.quit();
+        }
     }
 
     @Test
-    public  void checkLogo() throws IOException {
+    public void checkLogo() throws IOException {
         driver = BrowserSetup.getDriver();
-        driver.get("https://duckduckgo.com/about");  // Provide a valid URL
-        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(2));
-
-
-        List<WebElement> images = driver.findElements(By.cssSelector("a[title='Go to DuckDuckGo homepage'] img"));
-        Assert.assertFalse(images.isEmpty(), "Image should exist!");
-
-        System.out.println("Number of images found: " + images.size());
-
-        driver.quit();
-
+        try {
+            driver.get("https://duckduckgo.com/about");
+            WebDriverWait wait = new WebDriverWait(driver, TIMEOUT);
+            List<WebElement> images = wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(
+                    By.cssSelector("a[title='Go to DuckDuckGo homepage'] img")
+            ));
+            Assert.assertFalse(images.isEmpty(), "Logo image should exist");
+        } finally {
+            driver.quit();
+        }
     }
 
     @Test
     public void findfirstLink() throws IOException {
         driver = BrowserSetup.getDriver();
-        WebDriverWait wait = new WebDriverWait(driver , Duration.ofSeconds(10));
-        driver.get("https://duckduckgo.com/");  // Provide a valid URL
-        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(2));
+        WebDriverWait wait = new WebDriverWait(driver, TIMEOUT);
 
+        try {
+            driver.get(BASE_URL);
+            WebElement inputSearch = wait.until(ExpectedConditions.presenceOfElementLocated(
+                    By.cssSelector("input[name='q']")
+            ));
 
-        WebElement inputSearch = driver.findElement(By.cssSelector("input[name='q']"));
+            inputSearch.sendKeys("selenium webdriver" + Keys.RETURN);
 
-        inputSearch.sendKeys("selenium webdriver");
-        inputSearch.sendKeys(Keys.RETURN);
+            List<WebElement> allLinks = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(
+                    By.cssSelector("[data-testid='result-title-a']")
+            ));
 
-        By locatorofLinks = By.cssSelector("[data-testid='result-title-a']");
-        List <WebElement> allLinks = wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(
-                locatorofLinks
-        ));
-
-        String getThelink = allLinks.get(0).getDomAttribute("href");
-
-        System.out.println("nabiiiiiiil");
-        System.out.println(getThelink);
-        //Assert.assertFalse(images.isEmpty(), "Image should exist!");
-        Assert.assertEquals(getThelink, "https://www.selenium.dev/documentation/webdriver/");
-
-
-        driver.quit();
-
-
+            String firstLink = allLinks.get(0).getAttribute("href");
+            Assert.assertEquals(firstLink, "https://www.selenium.dev/documentation/webdriver/");
+        } finally {
+            driver.quit();
+        }
     }
 
     @Test
-    public void fourthTestNGLink()
-    {
-
+    public void fourthTestNGLink() throws IOException {
         driver =new FirefoxDriver();
-        WebDriverWait wait = new WebDriverWait(driver , Duration.ofSeconds(10));
-        driver.get("https://duckduckgo.com/");  // Provide a valid URL
-        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(2));
+        WebDriverWait wait = new WebDriverWait(driver, TIMEOUT);
 
+        try {
+            driver.get(BASE_URL);
+            WebElement inputSearch = wait.until(ExpectedConditions.presenceOfElementLocated(
+                    By.cssSelector("input[name='q']")
+            ));
 
-        WebElement inputSearch = driver.findElement(By.cssSelector("input[name='q']"));
+            inputSearch.sendKeys("TestNG" + Keys.RETURN);
 
-        inputSearch.sendKeys("TestNG");
-        inputSearch.sendKeys(Keys.RETURN);
+            List<WebElement> allLinks = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(
+                    By.cssSelector("a[data-testid='result-title-a']")
+            ));
 
-        By locatorofLinks = By.cssSelector("a[data-testid='result-title-a'] span");
-        List <WebElement> allLinks = wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(
-                locatorofLinks
-        ));
-        System.out.println("nabiiiiiiiiil");
-        String getThelink = allLinks.get(3).getText();
-         String[] title = getThelink.split(":");
+            boolean found = allLinks.stream()
+                    .map(WebElement::getText)
+                    .anyMatch(text -> text.contains("TestNG Tutorial"));
 
-        Assert.assertEquals(title[0],"TestNG Tutorial");
-
+            Assert.assertTrue(found, "Expected 'TestNG Tutorial' link not found");
+        } finally {
+            driver.quit();
+        }
     }
 
     @Test
     public void checkBox() throws IOException {
         driver = BrowserSetup.getDriver();
-        driver.get("http://the-internet.herokuapp.com/checkboxes");
+        try {
+            driver.get("http://the-internet.herokuapp.com/checkboxes");
+            List<WebElement> checkBoxes = driver.findElements(By.cssSelector("input"));
 
-        List<WebElement> checkBoxs = driver.findElements(By.cssSelector("input"));
+            checkBoxes.get(0).click();
+            checkBoxes.get(1).click();
 
-        WebElement checkBox1 = checkBoxs.get(0);
-        WebElement checkBox2 = checkBoxs.get(1);
-        checkBox1.click();
-        checkBox2.click();
+            Assert.assertTrue(checkBoxes.get(0).isSelected(), "Checkbox 1 should be selected");
+            Assert.assertFalse(checkBoxes.get(1).isSelected(), "Checkbox 2 should be deselected");
+        } finally {
+            driver.quit();
+        }
     }
 
     @Test
-    public void CheckvalueinTable() throws IOException {
-
+    public void checkValueInTable() throws IOException {
         driver = BrowserSetup.getDriver();
-        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10)); // Implicit wait
-        driver.get("https://www.w3schools.com/html/html_tables.asp");
+        WebDriverWait wait = new WebDriverWait(driver, TIMEOUT);
 
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-        List<WebElement> allRows = wait.until(ExpectedConditions
-                .presenceOfAllElementsLocatedBy(By.cssSelector("table#customers tr")));
+        try {
+            driver.get("https://www.w3schools.com/html/html_tables.asp");
 
-        // Process rows using Stream
-        Optional<String> country = allRows.stream()
-                .skip(1) // Skip header row (index 0)
-                .map(row -> row.findElements(By.tagName("td")))
-                .filter(cells -> cells.size() >= 3)
-                .filter(cells -> cells.get(0).getText().trim().equals("Ernst Handel"))
-                .map(cells -> cells.get(2).getText().trim())
-                .findFirst();
+            List<WebElement> allRows = wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(
+                    By.cssSelector("table#customers tr")
+            ));
 
-        // Assertions
-        Assert.assertTrue(country.isPresent(), "Company 'Ernst Handel' not found!");
-        Assert.assertEquals(country.get(), "Austria", "Country mismatch!");
+            Optional<String> country = allRows.stream()
+                    .skip(1)
+                    .map(row -> row.findElements(By.tagName("td")))
+                    .filter(cells -> cells.size() >= 3)
+                    .filter(cells -> cells.get(0).getText().equals("Ernst Handel"))
+                    .map(cells -> cells.get(2).getText())
+                    .findFirst();
+
+            Assert.assertTrue(country.isPresent(), "Company 'Ernst Handel' not found");
+            Assert.assertEquals(country.get(), "Austria", "Country mismatch");
+        } finally {
+            driver.quit();
+        }
     }
 
     @Test
-    public void UploadFile() throws IOException {
 
+    public void uploadFile() throws IOException, InterruptedException {
         driver = BrowserSetup.getDriver();
-        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10)); // Implicit wait
-        driver.get("http://the-internet.herokuapp.com/upload");
+        try {
+            driver.get("http://the-internet.herokuapp.com/upload");
 
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
 
-        WebElement upload = wait.until(ExpectedConditions.presenceOfElementLocated(
-                By.id("file-upload")
-        ));
+            // Wait for visibility of upload field
+            WebElement upload = wait.until(ExpectedConditions.visibilityOfElementLocated(
+                    By.id("file-upload")
+            ));
 
-        upload.sendKeys(new File("C:\\Users\\dell\\Desktop\\sql_training\\training.sql").getAbsolutePath() );
-        driver.findElement(By.id("file-submit")).click();
+            // Use relative file path
+            String filePath = new File("C:\\Users\\dell\\Desktop\\sql_training\\training.sql").getAbsolutePath();
+            upload.sendKeys(filePath);
 
-        WebElement header = driver.findElement(By.tagName("h3"));
+            driver.findElement(By.id("file-submit")).click();
 
-        Assert.assertEquals(header.getText(), "File Uploaded!");
-
-
+            // Wait for result page to load
+            WebElement header = wait.until(ExpectedConditions.visibilityOfElementLocated(
+                    By.tagName("h3")
+            ));
+            Assert.assertEquals(header.getText(), "File Uploaded!");
+        } finally {
+            Thread.sleep(500); // Allow time for cleanup
+            driver.quit();
+        }
     }
 
     @Test
-    public void Dragging() throws InterruptedException, IOException {
-
+    public void testDragAndDrop() throws IOException {
         driver = BrowserSetup.getDriver();
-        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10)); // Implicit wait
-        driver.get("https://jqueryui.com/resources/demos/droppable/default.html");
+        WebDriverWait wait = new WebDriverWait(driver, TIMEOUT);
 
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        try {
+            driver.get("https://jqueryui.com/resources/demos/droppable/default.html");
 
-        WebElement draggable = wait.until(ExpectedConditions.presenceOfElementLocated(
-                By.id("draggable")
-        ));
+            WebElement draggable = wait.until(ExpectedConditions.presenceOfElementLocated(
+                    By.id("draggable")
+            ));
 
-        WebElement droppable = driver.findElement(By.id("droppable"));
+            WebElement droppable = driver.findElement(By.id("droppable"));
+            new Actions(driver).dragAndDrop(draggable, droppable).perform();
 
-        new Actions(driver).dragAndDrop(draggable,droppable).build().perform();
-
-        //Thread.sleep(2000);
-
-        driver.close();
-
-
-
-
+            Assert.assertEquals(droppable.getText(), "Dropped!", "Drag and drop failed");
+        } finally {
+            driver.quit();
+        }
     }
 }
-
-
-
-
